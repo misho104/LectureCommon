@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my $i = 0;
+foreach (<>) {
+  my $output = $_;
+  if ($_ =~ /^\s*\\Item{(.*?)}.*?&(.*?)&(.*?)\\\\/) {
+    my ($date, $title, $sect) = ($1, $2, $3);
+    $date = strip($date);
+    $title = strip($title);
+    $sect = strip($sect);
+    $i++;
+    $output =<<_EOF_;
+<tr><th>$date</th>
+    <td class="n">&lang;$i&rang;</td>
+    <td class="t">$title</td>
+    <td class="r">$sect</td></tr>
+_EOF_
+  }
+  $output =~ s/--/&ndash;/g;
+  $output =~ s/\\S/&sect;/g;
+  $output =~ s/\s*\\EXTRA{(.*?)}\s*/ <span class="ex">(+ $1)<\/span>/g;
+  print $output;
+}
+
+sub strip {
+  $_[0] =~ s/^\s+//;
+  $_[0] =~ s/\s+$//;
+  return $_[0];
+}
