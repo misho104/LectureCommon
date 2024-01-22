@@ -3,30 +3,171 @@
 use strict;
 use warnings;
 
-my $i = 0;
+my @month = qw/??? Jan. Feb. Mar. Apr. May Jun. Jul. Aug. Sep. Oct. Nov. Dec./;
+my (@data);
+my (@dl, @table);
+
+my $mode = (@ARGV > 0 and ! -f $ARGV[0] ? shift : "");
+
+my $i_week = 0;
 foreach (<>) {
-  my $output = $_;
-  if ($_ =~ /^\s*\\Item{(.*?)}.*?&(.*?)&(.*?)\\\\/) {
-    my ($date, $title, $sect) = ($1, $2, $3);
-    $date = strip($date);
-    $title = strip($title);
-    $sect = strip($sect);
-    $i++;
-    $output =<<_EOF_;
-<tr><th>$date</th>
-    <td class="n">&lang;$i&rang;</td>
-    <td class="t">$title</td>
-    <td class="r">$sect</td></tr>
-_EOF_
+  if ($_ =~ /^\s*\\Item(.)\{(.*?)\}\s*\{(.*?)\}\s*&?(.*?)\\\\/) {
+    my ($increment, $day1, $day2, $title, $section, $type) = strip($1, $2, $3, $4, "", "");
+    my $date = to_date_two($day1, $day2);
+    if($title =~ /(.*)&(.*)/){
+      ($title, $section) = strip($1, $2);
+    }elsif($title =~ /\\(DAYOFF|EXAM)\{(.+)\}/){
+      ($type, $title) = (lc($1), $2);
+    }elsif($title =~ /\\(MC|MCS)\d?\{(.+)\}/){
+      $title = $2;
+    }
+    if($increment eq "+" or $type ne ""){
+      $i_week++ if $increment eq "+";
+      push(@data, [$i_week, $date, $title, $section, $type]);
+    }else{
+      my $prev = pop(@data);
+      my $d = "$day1$day2";
+      $d =~ s/.*\.//;
+      $d =~ s/^0//;
+      $prev->[1] .= ", $d";
+      $prev->[2] = [$prev->[2], $title];
+      $prev->[3] = [$prev->[3], $section];
+      $prev->[4] = [$prev->[4], $type];
+      push(@data, $prev);
+    }
   }
-  $output =~ s/--/&ndash;/g;
-  $output =~ s/\\S/&sect;/g;
-  $output =~ s/\s*\\EXTRA{(.*?)}\s*/ <span class="ex">(+ $1)<\/span>/g;
-  print $output;
 }
 
+my $n = 0;
+my $a = "even";
+foreach(@data){
+  my ($i, $date, $t, $s, $p) = @$_;
+
+  # for list
+  my ($title, $section, $type);
+  if(ref($t) eq 'ARRAY'){
+    $title   = $t->[0] . ($t->[0] and $t->[1] ? " / " : "") . $t->[1];
+    $section = $s->[0] . ($s->[0] and $s->[1] ? " / " : "") . $s->[1];
+    $type    = $p->[0] . $p->[1];
+  }else{
+    ($title, $section, $type) = ($t, $s, $p);
+  }
+  $n++;
+  my $npad = pad($n, 4);
+  my $datepad = pad($date, 11);
+  my $dd1 = $type ? "<dd class=\"$type\">" : "<dd>";
+  my $dd2 = $type eq "dayoff" ? " (no class)</dd>" : "</dd>";
+  $title = html_encode($title);
+
+  push(@dl, "<dt>$n$npad<span class=\"date\">($date)</span></dt$datepad>$dd1$title$dd2\n");
+
+
+  # for table
+  $a = ($a eq "even") ? "odd" : "even";
+  if(ref($t) eq 'ARRAY'){
+    my $row1 = html_encode(create_colspan(1, $i, $t->[0], $s->[0], $type, $p->[0]));
+    my $row2 = html_encode(create_colspan(2, "", $t->[1], $s->[1], $type, $p->[1]));
+    push(@table, "<tr class=\"$a\"><th rowspan=\"2\">$date</th>\n$row1</tr>\n<tr class=\"$a\">\n$row2</tr>\n");
+  }else{
+    my $row1 = html_encode(create_colspan(0, $i, $t, $s, $type, $type));
+    push(@table, "<tr class=\"$a\"><th>$date</th>\n$row1</tr>\n");
+  }
+}
+
+if($mode eq "both") {
+  print_table(@table);
+  print(@dl);
+}elsif($mode eq "table") {
+  print_table(@table);
+}else{
+  print(@dl);
+}
+exit(0);
+
+
+
 sub strip {
-  $_[0] =~ s/^\s+//;
-  $_[0] =~ s/\s+$//;
+  my @a = @_;
+  foreach(@a) {
+    s/^\s+//;
+    s/\s+$//;
+  }
+  return @a;
+}
+
+sub pad {
+  return " " x ($_[1] - length($_[0]));
+}
+
+sub to_date {
+  if($_[0] =~ /^\s*(\d+)\.0?(\d+)\s*$/){
+    return $month[$1] . pad($month[$1], 5) . pad($2, 2). $2;
+  } else {
+    return $_[0];
+  }
+}
+
+sub to_date_two {
+  if($_[0] eq "" or $_[1] eq ""){
+    return to_date($_[0] . $_[1]);
+  } else {
+    return to_date($_[0]) . ', ' . ($_[1] =~ /^0(\d)$/ ? $1 : $_[1]);
+  }
+}
+
+sub html_encode {
+  $_[0] =~ s/\\`e/è/g;
+  $_[0] =~ s/\s*\$\\vc\s+[BE]\$\s*//g;
   return $_[0];
+}
+
+sub create_colspan {
+  my ($r, $n, $title, $section, $type, $this) = @_;
+  if($type){
+   return "    <td class=\"misho$this\" colspan=\"3\">$title</td>";
+  }
+  my $result = "";
+  if($n and $r == 1){
+    $result = "    <td class=\"n\" rowspan=\"2\">&lang;$n&rang;</td>\n" ;
+  }elsif($n){
+    $result = "    <td class=\"n\">&lang;$n&rang;</td>\n" ;
+  }
+  if($section){
+    $result .= "    <td class=\"t\">$title</td>\n    <td class=\"r\">$section</td>";
+  }else{
+    $result .= "    <td class=\"t\" colspan=\"2\">$title</td>";
+  }
+  return $result;
+}
+
+sub print_table {
+  my $header = <<_EOF_;
+<p>Section numbers (&sect;) corresponds to Chapters in the textbook.</p>
+<style type="text/css">
+tr.odd  {  background: #fff3f9;  }
+tr.even {  background: #ffffff; }
+table { border-collapse: collapse; border: none; margin: 12px; }
+th, td { padding-top: 5px; padding-bottom: 5px; vertical-align: top; }
+th { padding-left: 0; padding-right: 0.5em; font-weight: 600; text-align: left; }
+td { padding-left: 0; padding-right: 0; }
+td.n { text-align: right; padding-right: 2px; }
+td.r { padding-left: 1em; }
+td.mishoexam { font-weight: bold; }
+td.mishodayoff { color: #aaa; }
+span.ex { color: #FF45A0; }
+</style>
+<table>
+_EOF_
+  my $footer = <<_EOF_;
+</table>
+_EOF_
+
+  print($header);
+  foreach(@table){
+    s/--/&ndash;/g;
+    s/\\S/&sect;/g;
+    s/\s*\\EXTRA\{(.*?)\}\s*/ <span class="ex">(+ $1)<\/span>/g;
+    print $_;
+  }
+  print($footer);
 }
