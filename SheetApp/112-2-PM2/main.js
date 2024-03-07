@@ -138,7 +138,7 @@ function copyStudentsFromMaster() {
 
   var students = [];
   for (let i = studentStartRow; true; i++) {
-    var range = sheet.getRange(i, studentStartColumn, 1, 6)
+    var range = sheet.getRange(i, studentStartColumn, 1, 7)
     if (range.isBlank()) break;
     var data = range.getValues();
     students.push({
@@ -147,7 +147,8 @@ function copyStudentsFromMaster() {
       studentName: data[0][2],
       studentId: data[0][3],
       googleId: data[0][4],
-      lastUpdated: data[0][5],
+      githubId: data[0][5],
+      lastUpdated: data[0][6],
       found: false,
       updated: false,
     });
@@ -188,6 +189,7 @@ function copyStudentsFromMaster() {
         studentName: "(?)",
         studentId: "B?????????",
         googleId: googleId,
+        githubId: "(?)",
         lastUpdated: now,
         found: true,
         updated: true,
@@ -211,12 +213,13 @@ function copyStudentsFromMaster() {
     var message = (s.updated ? "[!]" : "") + s.lastUpdated;
     if (!s.found) message = "!!! Record Not Found";
 
-    sheet.getRange(row, studentStartColumn, 1, 6).setValues([[
+    sheet.getRange(row, studentStartColumn, 1, 7).setValues([[
       s.email,
       s.googleName,
       s.studentName,
       s.studentId,
       s.googleId,
+      s.githubId,
       message
     ]]);
     row++;
