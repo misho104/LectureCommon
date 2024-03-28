@@ -1,0 +1,28 @@
+\providecommand\XOrigin{0}
+\providecommand\XScale{1}
+\providecommand\XPositions{0/1,1/1,2.5/1,3.5/1,4.5/1,5.5/1,6.5/1,8/1,9/1}
+\providecommand\YOrigin{0}
+\providecommand\YScale{1}
+\providecommand\YPositions{0/1,1/1,2/1,3/1,4/1,5/1,6/1}
+
+\def\DrawTable{
+  \foreach \row/\wX [count=\nX] in \XPositions {
+    \foreach \col/\wY [count=\nY] in \YPositions {
+      \tikzmath{
+        \pX=\XOrigin + \row*\XScale;
+        \pY=\YOrigin + \col*\YScale;
+      }
+      \coordinate (a\nX-\nY) at (\pX,\pY);
+      \coordinate (b\nX-\nY) at (\pX+\wX*\XScale,  \pY+\wY*\YScale);
+      \coordinate (t\nX-\nY) at (\pX+\wX*\XScale/2,\pY+\wY*\YScale/2);
+      \ifcsname nodraw\nX-\nY\endcsname\else\draw [draw=black] (a\nX-\nY) rectangle (b\nX-\nY);\fi
+    }
+  }
+}
+
+\def\ThickBox#1#2{\draw[line width=3px] (a#1) rectangle (b#2);}
+\def\TextBoxRaw#1#2#3{\node[yscale=-1]at(t#1-#2)  {#3};}
+\def\TextBox#1#2#3{\TextBoxRaw{#1}{#2}{\Name{#3}}}
+\def\GroupBox#1#2#3{\draw[fill=#3](a#1) rectangle (b#2);}
+\long\def\IfSwitch#1#2{\if0\Switch#1\else#2\fi}
+
