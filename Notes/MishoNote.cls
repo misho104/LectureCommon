@@ -1,6 +1,17 @@
-% Time-Stamp: <2024-02-10 18:14:49>
+% Time-Stamp: <2024-06-20 12:58:15>
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{MishoNote}[2022/11/23 Sho Iwamoto]
+
+\usepackage{luacode}
+\begin{luacode*}
+function unit(t)
+  tex.sprint(t:sub(1, 1) == "/" and "" or "\\,", "\\mathrm{", t, "}\\xspace")
+end
+function removeLF(t)
+  tex.print(({t:gsub("\\textLF.*", "")})[1])
+end
+\end{luacode*}
+\def\IfEmpty#1#2#3{\if1\directlua{tex.sprint(\luastring{#1} == "" and "1")}\relax#2\else#3\fi}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -21,6 +32,8 @@
 
 \newif\ifmisho@lastpage\misho@lastpagefalse
 \DeclareOption{lastpage}{\misho@lastpagetrue}
+\newif\ifmisho@minititle\misho@minititlefalse
+\DeclareOption{minititle}{\misho@minititletrue}
 
 \ExecuteOptions{11pt,final,pdf0,en}
 \ProcessOptions
@@ -85,20 +98,20 @@
       /DestOutputProfile \the\pdflastobj\space 0 R
       /OutputConditionIdentifier (sRGB)
       /Info (sRGB) >>]}
-  \hypersetup{pdfa,pdfapart=2,pdfaconformance=u,pdftrapped=True}
+  \hypersetup{pdfapart=2,pdfaconformance=u,pdftrapped=True}
 \fi
 
 \ifmisho@cmyk
-  \usepackage[hyperref,cmyk]{xcolor}
+  \usepackage[cmyk]{xcolor}
 \else
-  \usepackage[hyperref,rgb]{xcolor}
+  \usepackage[rgb]{xcolor}
 \fi
 
 \def\title@cr{}
 \def\title@ce{}
 \def\title@cu{}
 \def\title@lu{}
-\define@key{Hyp}{pdfcopyright}{\hyxmp@pdfstringdef\@pdfcopyright{#1}\def\title@cr{#1}}
+\define@key{Hyp}{pdfcopyright}{\hyxmp@pdfstringdef\@pdfcopyright{#1}\def\title@cr{\directlua{removeLF(\luastringN{#1})}}}
 \define@key{Hyp}{pdfcontactemail}{\hyxmp@pdfstringdef\@pdfcontactemail{#1}\def\title@ce{#1}}
 \define@key{Hyp}{pdfcontacturl}{\hyxmp@pdfstringdef\@pdfcontacturl{#1}\def\title@cu{#1}}
 \define@key{Hyp}{pdflicenseurl}{\hyxmp@pdfstringdef\@pdflicenseurl{#1}\def\title@lu{#1}}
@@ -159,6 +172,7 @@
   % fine tuning of some letters
   % https://tex.stackexchange.com/questions/364310/
   \setmathfont{latinmodern-math.otf}[range={\mupUpsilon,\mitUpsilon,\mbfUpsilon,\mbfitUpsilon}]
+  \setmathfont{texgyreschola-math.otf}[range={\hat,\tilde,\bar}]
   \setmathfont{\misho@font@math}[range=\int]
   \AtBeginDocument{\renewcommand*\Upsilon{\mupUpsilon}}
 
@@ -166,9 +180,9 @@
 \let\JA\relax
 \let\EN\relax
 \ifmisho@japanese
-  \def\EN#1{\english{#1}\endenglish}
+  \def\EN#1{{\english{#1}\endenglish}}
 \else
-  \def\JA#1{\japanese{#1}\endjapanese}
+  \def\JA#1{{\japanese{#1}\endjapanese}}
 \fi
 
 % Logical fonts
@@ -180,6 +194,9 @@
 
 % More math fonts (but not ever used)
 % \usepackage{wasysym}
+% yhmath is INCOMPATIBLE!
+%\DeclareSymbolFont{yhlargesymbols}{OMX}{yhex}{m}{n}
+%\DeclareMathAccent{\yhwidehat}{\mathord}{yhlargesymbols}{"62}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -244,13 +261,23 @@
 \fi
 
 \def\head@hstyle{\fontsize{9}{12}\selectfont\color{lightgray}\sffamily}
-\def\head@jstyle{\fontsize{9}{12}\selectfont\color{dimgray}\texttt}
+\def\head@jstyle{\fontsize{9}{12}\selectfont\color{dimgray}\ttfamily}
 \def\head@pstyle{\fontsize{12}{12}\selectfont\sffamily\bfseries}
+\def\head@minititleheadstyle{\fontsize{9}{12}\selectfont\color{gray}\ttfamily}
 \def\ps@plain{%
   \def\@evenfoot{} % {\reset@font\hfil\thepage\hfil}
   \let\@oddfoot\@evenfoot
   \def\@evenhead{%
     \kern2mm{\head@hstyle{\head@h}}\hfil{\head@jstyle{\head@j}}%
+    \makebox[3em][r]{\head@pstyle\head@p}\kern2mm%
+    \aftergroup\head@hrule}%
+  \let\@oddhead\@evenhead
+}
+\def\ps@minititle{%
+  \def\@evenfoot{} % {\reset@font\hfil\thepage\hfil}
+  \let\@oddfoot\@evenfoot
+  \def\@evenhead{%
+    \hfil{\head@minititleheadstyle{\@author, \head@j}}%
     \makebox[3em][r]{\head@pstyle\head@p}\kern2mm%
     \aftergroup\head@hrule}%
   \let\@oddhead\@evenhead
@@ -302,27 +329,33 @@
                                        {-1em}%
                                       {\headfont\normalsize\bfseries}}
 
-\def\link@ifurl#1#2{\IfStrEq{#1}{}{#2}{\href{#1}{#2}}}
-\def\maketitle{%
-\begin{titlepage}%
-  \IfStrEq{\title@cr}{}{\setlength\@tempdimb{6mm}}{\setlength\@tempdimb{7.5mm}}
-  \setcounter{page}{0}
-  \let\footnoterule\relax
-  \let\footnote\thanks
-  \@headframebox{%
-    \node[fill=lightgray!50,anchor=south west,xshift= 5mm,yshift=15.7mm]
-      {\normalfont\fontsize{24}{24}\selectfont\bfseries\strut\@title};
-    \node[anchor=south west,xshift=85mm,yshift=\@tempdimb]
-      {\headfont\fontsize{16}{16}\selectfont \@author\strut};
-    \advance\@tempdimb -4.5mm%
-    \node[anchor=south west,xshift=85mm,yshift=\@tempdimb]
-      {\ttfamily\mydate\today~\currenttime\strut};
-    \IfStrEq{\title@cr}{}{}{%
-      \node[anchor=south west,xshift=85mm,yshift=-1mm]{%
-        \link@ifurl{\title@lu}{\sffamily\small\color{gray}\copyright\title@cr}\strut};
-    }
-}}
-\def\endmaketitle{\par\vfil\null\end{titlepage}}
+\def\link@ifurl#1#2{\IfEmpty{#1}{#2}{\href{#1}{#2}}}
+\def\maketitle{\ifmisho@minititle%
+  \thispagestyle{minititle}%
+  \newpage\global\@topnum\z@\newpage%
+  \begin{flushleft}%
+  {\headfont\LARGE\bfseries \@title\par}%
+  \end{flushleft}\par\@afterheading\@afterindentfalse\ignorespaces%
+\else
+  \begin{titlepage}%
+    \IfEmpty{\title@cr}{\setlength\@tempdimb{6mm}}{\setlength\@tempdimb{7.5mm}}
+    \setcounter{page}{0}
+    \let\footnoterule\relax
+    \let\footnote\thanks
+    \@headframebox{%
+      \node[fill=lightgray!50,anchor=south west,xshift= 5mm,yshift=15.7mm]
+        {\normalfont\fontsize{24}{24}\selectfont\bfseries\strut\@title};
+      \node[anchor=south west,xshift=85mm,yshift=\@tempdimb]
+        {\headfont\fontsize{16}{16}\selectfont \@author\strut};
+      \advance\@tempdimb -4.5mm%
+      \node[anchor=south west,xshift=85mm,yshift=\@tempdimb]
+        {\ttfamily\mydate\today~\currenttime\strut};
+      \IfEmpty{\title@cr}{}{%
+        \node[anchor=south west,xshift=85mm,yshift=-1mm]{%
+          \link@ifurl{\title@lu}{\sffamily\small\color{gray}\copyright\title@cr}\strut};
+    }}%
+\fi}
+\def\endmaketitle{\ifmisho@minititle\relax\else\par\vfil\null\end{titlepage}\fi}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -469,6 +502,13 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% paragraph continuation after tcolorbox
+% https://tex.stackexchange.com/questions/568782/
+\tcbset{%
+  after={\ifx\tcb@drawcolorbox\tcb@drawcolorbox@breakable\else\@endparenv\fi}%
+}
+\appto\tcb@use@after@lastbox{\@endparenv\@doendpe}
+
 \tcbset{mytheobox/.style={%
   reset,theorem style=standard,breakable,sharp corners,enhanced,
   fonttitle=\sffamily\bfseries\upshape,
@@ -493,6 +533,7 @@
 
 \newtcbtheorem{theorem}{Theorem}{mytheobox}{thm}
 \newtcbtheorem[use counter from=theorem]{definition}{Definition}{mytheobox}{def}
+\newtcbtheorem[use counter from=theorem]{claim}{Claim}{mytheobox}{clm}
 
 \newtcbtheorem[use counter from=theorem]{example}{Example}{
   reset,enhanced,frame hidden,interior hidden,
@@ -535,6 +576,21 @@
 \NewDocumentCommand\Problem{som}{\new@problem{\IfBooleanTF{#1}{Problem}{Problem\*}}{#2}{#3}}
 
 \newenvironment{miniitemize}{\itemize\@topsep=\parsep\parskip=0mm}{\enditemize}
+
+\newcommand\UseSimpleTheoremStyle{
+  \tcbset{mytheobox/.style={%
+    reset,theorem style=standard,breakable,sharp corners,enhanced,
+    separator sign={~~~},detach title,before upper={\makebox[30mm][l]{\raisebox{1.5mm}{\tcbtitle}}},
+    fonttitle=\sffamily\bfseries\upshape,coltitle=black,boxrule=0.25mm,
+    boxsep=1.5mm,top=0mm,left*=3mm,right*=3mm,
+    interior code={
+      \path[draw=black,fill=white](interior.south west) rectangle (interior.north east);
+      \path[draw=black,line width=0.25mm]
+        ([xshift=00mm,yshift=-5.5mm]interior.north west)
+      --([xshift=28mm,yshift=-5.5mm]interior.north west)
+      --([xshift=28mm,yshift=0mm]interior.north west);
+    },
+}}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -637,8 +693,10 @@
 \newcommand\coco[1]{\mathrm{c}^2_{#1}}
 \newcommand\sisi[1]{\mathrm{s}^2_{#1}}
 
-\RedeclareMathOperator{\Re}   {\mathrm{Re}}
-\RedeclareMathOperator{\Im}   {\mathrm{Im}}
+\AtBeginDocument{
+  \RedeclareMathOperator{\Re} {\mathrm{Re}}
+  \RedeclareMathOperator{\Im} {\mathrm{Im}}
+}
 \DeclareMathOperator{\arctanh}{\mathrm{arctanh}}
 \DeclareMathOperator{\arccoth}{\mathrm{arccoth}}
 \DeclareMathOperator{\arcsinh}{\mathrm{arcsinh}}
@@ -668,7 +726,7 @@
 \newcommand*\pmat[1]{\begin{pmatrix}#1\end{pmatrix}}
 \newcommand*\spmat[1]{\left(\begin{smallmatrix}#1\end{smallmatrix}\right)}
 
-\newcommand\unit[1]{\StrLeft{#1}{1}[\unit@firstchar]{\IfStrEq{\unit@firstchar}{/}\relax\,}\mathrm{#1}\xspace}
+\newcommand\unit[1]{\directlua{unit(\luastring{#1})}}
 \newcommand\eV {\unit{eV}}
 \newcommand\keV{\unit{keV}}
 \newcommand\MeV{\unit{MeV}}
@@ -686,7 +744,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\usepackage{subcaption,booktabs,wrapfig,slashed,xspace,xstring,braket,cancel}
+\usepackage{subcaption,booktabs,wrapfig,slashed,xspace,braket,cancel,amsmath}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
