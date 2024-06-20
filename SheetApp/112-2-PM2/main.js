@@ -405,22 +405,24 @@ function listAnnouncements() {
   const lastColumn = sheet.getDataRange().getLastColumn();
   sheet.getRange(startRow, startColumn, lastRow - startRow + 1, lastColumn - startColumn + 1).clearContent();
 
+  var row = -1;
   for (let i = 0; i < res.length; i++) {
     console.log(res[i]);
     if (
       (res[i].assigneeMode == "INDIVIDUAL_STUDENTS") &&
       (res[i].creatorUserId == userId)) {
+      row++;
       var updated = Utilities.formatDate(new Date(res[i].updateTime), "GMT+8", "yyyy/MM/dd HH:mm:ss");
-      var gidCell = origin.offset(i, listCells.googleId).getA1Notation();
-      origin.offset(i, listCells.courseId).setValue(res[i].courseId);
-      origin.offset(i, listCells.messageId).setValue(res[i].id);
-      origin.offset(i, listCells.googleId).setValue(res[i].individualStudentsOptions.studentIds);
-      origin.offset(i, listCells.studentId).setValue('=XLOOKUP($' + gidCell + ',Master!$S$2:$S$100,Master!$R$2:$R$100,"")');
-      origin.offset(i, listCells.studentName).setValue('=XLOOKUP($' + gidCell + ',Master!$S$2:$S$100,Master!$Q$2:$Q$100,"")');
-      origin.offset(i, listCells.updatedAt).setValue(updated);
+      var gidCell = origin.offset(row, listCells.googleId).getA1Notation();
+      origin.offset(row, listCells.courseId).setValue(res[i].courseId);
+      origin.offset(row, listCells.messageId).setValue(res[i].id);
+      origin.offset(row, listCells.googleId).setValue(res[i].individualStudentsOptions.studentIds);
+      origin.offset(row, listCells.studentId).setValue('=XLOOKUP($' + gidCell + ',Master!$S$2:$S$100,Master!$R$2:$R$100,"")');
+      origin.offset(row, listCells.studentName).setValue('=XLOOKUP($' + gidCell + ',Master!$S$2:$S$100,Master!$Q$2:$Q$100,"")');
+      origin.offset(row, listCells.updatedAt).setValue(updated);
       var messageLines = res[i].text.trim().split("\n");
       for (let j = 0; j < messageLines.length; j++)
-        origin.offset(i, listCells.message + j).setValue(messageLines[j]);
+        origin.offset(row, listCells.message + j).setValue(messageLines[j]);
     }
   }
 }
