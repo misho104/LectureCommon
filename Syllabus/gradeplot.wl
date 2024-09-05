@@ -20,6 +20,7 @@ ToHistogram[score_, categories_]:=Block[{
     counts = Counts[ToGrade/@score],
     data, styled
   },
+  Print[TextString[Length[score]] <> " data"];
   data = categories /. counts /. ({_String, b_String} :> {0, b});
   styled = Table[
     If[i <= Length[data] && j <= Length[data[[i]]], Style[data[[i, j]], Color[i, j]], None],
@@ -35,5 +36,16 @@ ToHistogram[score_, categories_]:=Block[{
 ]
 ToHistogram[score_] := ToHistogram[score, Stacks]
 
+ToHistogram[{10, 20, 40, 80, 0, 0, -1}]
 
-ToHistogram[{30,40,60,70,80,90,0,-1}]
+
+ExamScatter[data_, range_] := Module[{plot1, plot2, plot3},
+  plot1 = Graphics[{PointSize[Large], Blue, Opacity[0.5], Point @ data}, Frame -> True, PlotRange->range[[1;;2, 1;;2]], LabelStyle->{16},
+  GridLines->{{1,2,3,4,5},{1,2,3,4,5}}*10];
+  plot2 = Histogram[data[[All, 1]], range[[1]], PlotRange->{range[[1,1;;2]], {0,Length[data]/2}}, Axes->None, PlotRangePadding->0];
+  plot3 = Histogram[data[[All, 2]], range[[2]], PlotRange->{{0,Length[data]/2}, range[[2,1;;2]]}, Axes->None, PlotRangePadding->0, BarOrigin -> Left];
+  ResourceFunction["PlotGrid"][{{plot2, None}, {plot1, plot3}}, 
+    Spacings -> 5, ItemSize -> {{200, 50}, {50, 200}}, AspectRatio -> 1]
+  ];
+ExamScatter[data_] := ExamScatter[data, {{0, 55, 5}, {0, 55, 5}}]
+ExamScatter[{{10, 10}, {40, 40}}]
