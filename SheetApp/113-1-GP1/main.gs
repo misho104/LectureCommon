@@ -404,16 +404,16 @@ function listAnnouncements() {
 
   var row = -1;
   for (let i = 0; i < res.length; i++) {
-    console.log(res[i]);
     if (
       (res[i].assigneeMode == "INDIVIDUAL_STUDENTS") &&
       (res[i].creatorUserId == userId)) {
       row++;
       var updated = Utilities.formatDate(new Date(res[i].updateTime), "GMT+8", "yyyy/MM/dd HH:mm:ss");
       var gidCell = origin.offset(row, listCells.googleId).getA1Notation();
+      var googleId = (res[i].individualStudentsOptions === undefined) ? "removed" : (res[i].individualStudentsOptions.studentIds);
       origin.offset(row, listCells.courseId).setValue(res[i].courseId);
       origin.offset(row, listCells.messageId).setValue(res[i].id);
-      origin.offset(row, listCells.googleId).setValue(res[i].individualStudentsOptions.studentIds);
+      origin.offset(row, listCells.googleId).setValue(googleId);
       origin.offset(row, listCells.studentId).setValue('=XLOOKUP($' + gidCell + ',Master!$S$2:$S$100,Master!$R$2:$R$100,"")');
       origin.offset(row, listCells.studentName).setValue('=XLOOKUP($' + gidCell + ',Master!$S$2:$S$100,Master!$Q$2:$Q$100,"")');
       origin.offset(row, listCells.updatedAt).setValue(updated);
@@ -422,4 +422,15 @@ function listAnnouncements() {
         origin.offset(row, listCells.message + j).setValue(messageLines[j]);
     }
   }
+}
+
+function generateHash(input, secret){
+  var inputText = input.toString();
+  var rawHash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, inputText + secret);
+  var letters = "ABEFGHKLMNPRTWXY";
+  var textHash = inputText + "-";
+  for (let j = 0; j < 3; j++) {
+    textHash += letters[Math.abs(rawHash[j] % 16)];
+  }
+  return textHash;
 }
