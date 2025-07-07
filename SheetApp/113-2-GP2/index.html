@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js"></script>
+  <script>
+
+  function setOutput(message) { $("#output").html(message); }
+  function onFailure(error) { setOutput('<div class="alert alert-danger" role="alert">'+ error.message +'!</div>'); }
+
+  var reader = new FileReader();
+
+  window.onload = function() {
+    $("#sid").on("change", (e) => {
+      $("#sname")[0].value = "(retrieving...)";
+      var id = e.target.value;
+      if(id.match(/^B\d+$/i)){
+        setOutput("");
+        google.script.run.withSuccessHandler(
+          (response) => { $("#sname")[0].value = response; }
+        ).withFailureHandler(onFailure).updateStudentInfo(id);
+      }else{
+        onFailure({"message":"Invalid Student ID"});
+      }
+    });
+    $("#formSubmit").on("click", (e) => {
+      var sid = $("#sid")[0].value;
+      var fname = $("#fileName").text();
+      $("#formSubmit").prop('disabled', true);
+      google.script.run.withSuccessHandler(
+        (response) => { console.log(response); setOutput(response); }
+      ).withFailureHandler(onFailure).uploadFile(sid, fname, reader.result);
+    });
+    $('#file').on("change", function(e){
+        var f = e.target.files[0];
+        setOutput("(file cleared)");
+        $("#formSubmit").prop('disabled', true);
+        if (f){
+          var name = f.name;
+          reader.onload = function(e){
+            $("#fileName").text(name);
+            setOutput(name + " loaded.");
+            $("#formSubmit").prop('disabled', false);
+          }
+          reader.readAsDataURL(f);
+        }
+    });
+  }
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-6">
+        <form id="myForm">
+          <p class="h4 mb-4 text-center">File Delivery for General Physics 1</p>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="sid">Student ID</label>
+              <input type="text" class="form-control" name="sid" id="sid" />
+            </div>
+
+            <div class="form-group col-md-6">
+              <label for="sname">Student name</label>
+              <input type="text" class="form-control" disabled="disabled" id="sname" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="FormControlFile">File</label>
+            <input name="file" class="form-control-file" type="file" id="file" />
+          </div>
+          <div class="form-group" id="fileName"></div>
+          <br>
+          <button id="formSubmit" type="button" class="btn btn-primary btn-block" disabled="disabled">Submit</button>
+        </form>
+        <br>
+        <div id="output"></div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
