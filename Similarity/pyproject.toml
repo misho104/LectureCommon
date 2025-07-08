@@ -1,0 +1,39 @@
+[project]
+name = "similarity"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "click>=8.2.1",
+    "coloredlogs>=15.0.1",
+    "en-core-web-lg",
+    "gspread>=6.2.1",
+    "pandas>=2.3.0",
+    "pip>=25.1.1",
+    "scikit-learn>=1.7.0",
+    "sentence-transformers>=5.0.0",
+    "spacy>=3.8.7",
+]
+[dependency-groups]
+dev = [
+    "ruff>=0.12.2",
+]
+
+
+[tool.uv.sources]
+en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" }
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
