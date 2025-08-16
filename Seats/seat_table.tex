@@ -1,0 +1,107 @@
+%!TEX program=lualatex
+%!TEX options=-synctex=1 -interaction=nonstopmode -halt-on-error "%DOC%.tex"
+\documentclass[11pt,pdfx]{../GenPhys1/MishoNote}
+\title{Seat Assignment Table}
+\author{Sho Iwamoto}
+
+\usepackage{minibox,xstring}
+\usetikzlibrary{math,patterns,patterns.meta}
+
+\makeatletter
+\def\XPositions{0/1, 1/1, 2.2/1, 3.2/1, 4.2/0.4, 4.6/1, 5.6/1, 6.8/1, 7.8/1}
+\def\YPositions{0/1, 1/1, 2/1, 3/1, 4/1, 5/1, 6/1}
+\def\XScale{2.6}
+\def\YScale{1.9}
+\@namedef{nodraw8-7}{\relax}
+\@namedef{nodraw9-7}{\relax}
+\renewfontfamily{\japanesefont}  [BoldFont=\misho@font@jabf,ItalicFont=\misho@font@ja,  ItalicFeatures={FakeSlant}]{NotoSerifCJKtc-Medium.otf}
+\def\Name#1{%
+  \def\tName{\@nameuse{Name#1}}%
+  \def\tID{\@nameuse{Id#1}}%
+  \minibox[l]{%
+    {\sffamily\fontsize{14}{14}\selectfont\StrLeft{\tID}{7}~~}\\[-.1em]%
+    {\sffamily\fontsize{20}{9}\selectfont\hfill\StrRight{\tID}{3}}\\[-1em]%
+    \kern1mm\raisebox{1mm}{\fontsize{20}{7}\selectfont\JA{\PHANTOM{\StrLeft{\tName}{1}}}}%
+    \fontsize{9}{9}\selectfont\JA{\PHANTOM{~~同學}}
+  }
+}
+\def\FrontDesks{
+  \node [draw,thick,yscale=-1,inner sep=1mm,anchor=north west] at (0,-1) {\LARGE~\textsf{speakers desk}~};
+  \node [draw,thick,yscale=-1,inner sep=1mm,anchor=north] at (11,-1) {\LARGE\kern8em\textsf{whiteboard}\kern8em};
+}
+\makeatother
+
+\input{seats.def}
+\input{students.def}
+
+\pagestyle{empty}
+\begin{document}%
+
+% blank style
+\begin{tikzpicture}[transform shape,rotate=-90,yscale=-1]
+\FrontDesks
+\DrawTable
+\foreach ~ in {1,...,7}{ \TextBox5~{\LARGE$\times$} }
+\TextBox11{\LARGE$\times$}
+\TextBox67{\LARGE$\times$}
+\TextBox85{\LARGE$\times$}
+\TextBox86{\LARGE$\times$}
+\GroupBox{8-1}{8-4}{cyan,opacity=0.2}
+\GroupBox{1-2}{1-7}{yellow,opacity=0.3}
+\GroupBox{3-1}{3-7}{yellow,opacity=0.3}
+\GroupBox{6-1}{6-6}{yellow,opacity=0.3}
+\node[draw,yscale=-1,anchor=north west, fill=yellow] at (3, 14) { \LARGE\textsf{YELLOW = DOP} };
+\node[draw,yscale=-1,anchor=north west]              at (8, 14) { \LARGE\textsf{WHITE = MOES} };
+\node[draw,yscale=-1,anchor=north west, fill=cyan]   at (13, 14) { \LARGE\textsf{CYAN = Other} };
+\AssignSeat{B01}71
+\AssignSeat{B02}72
+\AssignSeat{B03}73
+\AssignSeat{B04}74
+\AssignSeat{B05}75
+\AssignSeat{B06}76
+\AssignSeat{B07}77
+\AssignSeat{B08}41
+\AssignSeat{B09}42
+\AssignSeat{B10}43
+\AssignSeat{B11}44
+\AssignSeat{B12}45
+\AssignSeat{B13}46
+\AssignSeat{B14}47
+\AssignSeat{B15}21
+\AssignSeat{B16}22
+\AssignSeat{B17}23
+\AssignSeat{B18}24
+\AssignSeat{B19}25
+\AssignSeat{B20}26
+\AssignSeat{B21}27
+\AssignSeat{A01}12
+\AssignSeat{A02}13
+\AssignSeat{A03}14
+\AssignSeat{A04}15
+\AssignSeat{A05}16
+\AssignSeat{A06}17
+\AssignSeat{A07}31
+\AssignSeat{A08}32
+\AssignSeat{A09}33
+\AssignSeat{A10}34
+\AssignSeat{A11}35
+\AssignSeat{A12}36
+\AssignSeat{A13}37
+\AssignSeat{A14}61
+\AssignSeat{A15}62
+\AssignSeat{A18}63
+\AssignSeat{A19}64
+\AssignSeat{A20}65
+\AssignSeat{A21}66
+\AssignSeat{C01}81
+\AssignSeat{C02}82
+\AssignSeat{C04}83
+\AssignSeat{C05}84
+\AssignSeat{D01}91
+\AssignSeat{D02}92
+\AssignSeat{D03}93
+\AssignSeat{D04}94
+\AssignSeat{D05}95
+\AssignSeat{D06}96
+\end{tikzpicture}
+\end{document}
