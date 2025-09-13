@@ -70,12 +70,13 @@ ExamScatter[{{10, 10}, {20, 20}, {30, 30}}]
 contours = {90, 85, 80, 77, 73, 70, 67, 63, 60} - 0.5;
 contours2 = {90, 80, 70, 60} - 0.5;
 Color[i_, j_] := Hue[{0.1, 0.24,0.4,0.56}[[i]], {0.3,0.4,0.5}[[j]] ,1]
-f[core_, extra_] := Max[core, 0.62(core+Min[extra,30])+20]
-
-Pos[0] = {47, 27};
-Pos[1] = {64, 25};
-Pos[2] = {81, 23};
-Pos[3] = {95, 27};
+f[core_, extra_] := smoothMax[core, 0.58(core+smoothMin[extra,30])+25]
+smoothMax[a_, b_, eps_:0.00001] := (a + b + Sqrt[(a - b)^2 + eps])/2
+smoothMin[a_, b_, eps_:0.00001] := (a + b - Sqrt[(a - b)^2 + eps])/2
+Pos[0] = {45, 26};
+Pos[1] = {62, 25};
+Pos[2] = {79, 24};
+Pos[3] = {93, 27};
 D1[_] = {2, -3.5};
 D2[_] = {5, -7};
 ContourPlot[f[x, y], {x,40,100}, {y, 0, 30}, Contours->contours2, FrameLabel->{"Core score", "Performance"},  Epilog->{
@@ -89,4 +90,11 @@ ContourPlot[f[x, y], {x,40,100}, {y, 0, 30}, Contours->contours2, FrameLabel->{"
   Inset[Text["to"], Pos[2] + D1[2]],
   Inset[Text["A"],  Pos[2] + D2[2]],
   Inset[Text["A+"], Pos[3]]
-}, BaseStyle->{FontSize->24}, ImageSize->Medium, MaxRecursion->0]
+}, BaseStyle->{FontSize->24}, ImageSize->Medium, PlotPoints->80]
+
+
+(* ::Input:: *)
+(**)
+
+
+OutputPDF[%,"tmp.pdf"]
